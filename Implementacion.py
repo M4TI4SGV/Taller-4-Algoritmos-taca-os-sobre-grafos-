@@ -8,6 +8,7 @@ def ReadOBJ( fname ):
         d = line.rstrip().lstrip().split(' ')
         if d[0] == 'v':
             V += [tuple([float(c) for c in d[1:]])]
+
         elif d[0] == 'f':
             I = [int(i.split('/')[0]) - 1 for i in d[1:]]
             for i in range(len(I)):
@@ -89,31 +90,42 @@ def Dijkstra( G, s ):
     print("Arbol de Dijkstra (caminos más cortos):", prev)
     return prev
 
-def SpanningTree_Backtrack( T, e ):
+def SpanningTree_Backtrack(T, e):
     P = []
+    if e is None:  # Verifica si el nodo es alcanzable
+        return P  # Devuelve un camino vacío si no lo es
+
     j = e
-    while T[j] != j:
+    while T[j] is not None and T[j] != j:  # Asegúrate de que no es None
         P = [j] + P
         j = T[j]
-    return [j] + P
+    P = [j] + P  # Agregar el último nodo al camino
+    return P
 
-def ChooseMaxPath( G, T ):
+
+def ChooseMaxPath(G, T):
     V, A = G
     max_path = []
     max_distance = -math.inf
+
     for i in range(len(V)):
-        for j in range(i + 1, len(V)):
-            path = SpanningTree_Backtrack(T, j)
-            distance = sum(Distance(V[path[k]], V[path[k + 1]]) for k in range(len(path) - 1))
-            if distance > max_distance:
-                max_distance = distance
-                max_path = path
-    
+        if T[i] is not None:  # Solo considera los nodos alcanzables
+            for j in range(i + 1, len(V)):
+                if T[j] is not None:  # Solo considera nodos alcanzables
+                    path = SpanningTree_Backtrack(T, j)
+                    if len(path) > 1:  # Evita caminos vacíos o de un solo nodo
+                        distance = sum(Distance(V[path[k]], V[path[k + 1]]) for k in range(len(path) - 1))
+                        if distance > max_distance:
+                            max_distance = distance
+                            max_path = path
+
     print("Camino más largo:", max_path, "con distancia:", max_distance)
     return max_path
 
+
+
 if __name__ == '__main__':
-    G = ReadOBJ('cruiser.obj')  # Asegúrate de que el archivo cruiser.obj esté en el mismo directorio
+    G = ReadOBJ('f-16.obj')  # Asegúrate de que el archivo cruiser.obj esté en el mismo directorio
     K = Kruskal(G)
     KP = ChooseMaxPath(G, K)
     KS = FormatPathAsOBJString(G[0], KP)
